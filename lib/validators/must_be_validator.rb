@@ -22,14 +22,18 @@ class MustBeValidator < ActiveModel::EachValidator
 
     return if options[:blank] && value.blank?
     message << " blank" if options[:blank]
+
     return if options[:present] && value.present?
     message << " present" if options[:present]
+
     return if options[:one_of] && options[:one_of].include?(value)
     message = ": '#{value}' is not a valid value" if options[:one_of]
+
     return if options[:not_any_of] && !(options[:not_any_of].include?(value))
     message = ": '#{value}' is not a valid value" if options[:not_any_of]
+
     return if options[:only_from] && (options[:only_from] & Array(value) == Array(value))
-    message = ": #{value} is not a valid value" if options[:only_from]
+    message = ": #{Array(value).join(",").gsub('"', '\'')} is not a valid value" if options[:only_from]
 
     # handle before and after date comparisons using date validator
     if options[:before] 

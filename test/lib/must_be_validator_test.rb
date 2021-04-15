@@ -292,6 +292,204 @@ class MustBeValidatorTest < Minitest::Test
       end
     end
 
+    describe "one_of" do
+      let(:clazz) do
+        Class.new(User) do
+          validates :bonus, must_be: { one_of: [1,2,3] } 
+        end
+      end
+      it "doesnt add an error if the attribute is in array" do
+        instance = clazz.new(bonus: 2)
+        assert instance.valid?
+        assert instance.errors.empty?
+      end
+      it "shows error if value isnt in list" do
+        instance = clazz.new(bonus: 7)
+        refute instance.valid?
+        assert_equal ["Bonus : '7.0' is not a valid value. Valid values: 1, 2, 3."], instance.errors.full_messages
+      end
+      it "shows error without valid options if show_values = false" do
+        clazz = Class.new(User) do
+          validates :bonus, must_be: { one_of: [1,2,3], show_values: false }
+        end
+        instance = clazz.new(bonus: 7)
+        refute instance.valid?
+        assert_equal ["Bonus : '7.0' is not a valid value."], instance.errors.full_messages
+      end
+    end
+
+    describe "not_any_of" do
+      let(:clazz) do
+        Class.new(User) do
+          validates :bonus, must_be: { not_any_of: [1,2,3] } 
+        end
+      end
+      it "doesnt add an error if the attribute is NOT in array" do
+        instance = clazz.new(bonus: 7)
+        assert instance.valid?
+        assert instance.errors.empty?
+      end
+      it "shows error if value IS in list" do
+        instance = clazz.new(bonus: 2)
+        refute instance.valid?
+        assert_equal ["Bonus : '2.0' is not a valid value. Invalid values: 1, 2, 3."], instance.errors.full_messages
+      end
+      it "shows error without valid options if show_values = false" do
+        clazz = Class.new(User) do
+          validates :bonus, must_be: { not_any_of: [1,2,3], show_values: false }
+        end
+        instance = clazz.new(bonus: 2)
+        refute instance.valid?
+        assert_equal ["Bonus : '2.0' is not a valid value."], instance.errors.full_messages
+      end
+    end
+
+    describe "only_from" do
+      let(:clazz) do
+        Class.new(User) do
+          validates :letters, must_be: { only_from: %w(A B C) } 
+        end
+      end
+      it "doesnt add an error if the attribute is single value in array" do
+        instance = clazz.new(letters: 'A')
+        assert instance.valid?
+        assert instance.errors.empty?
+      end
+      it "shows error if value is array  with values NOT in list" do
+        instance = clazz.new(letters: ['A', 'Z'])
+        refute instance.valid?
+        assert_equal ["Letters : ['A', 'Z'] is not a valid value. Valid values: A, B, C."], instance.errors.full_messages
+      end
+      it "shows error if value is single with value NOT in list" do
+        instance = clazz.new(letters: 'Z')
+        refute instance.valid?
+        assert_equal ["Letters : Z is not a valid value. Valid values: A, B, C."], instance.errors.full_messages
+      end
+      it "shows error without valid options if show_values = false" do
+        clazz = Class.new(User) do
+          validates :letters, must_be: { only_from: %w(A B C), show_values: false } 
+        end
+        instance = clazz.new(letters: ['A', 'Z'])
+        refute instance.valid?
+        assert_equal ["Letters : ['A', 'Z'] is not a valid value."], instance.errors.full_messages
+      end
+    end
+
+    describe "before" do
+      let(:clazz) do
+        Class.new(User) do
+          validates :birthday, must_be: { before: Date.new(2020,01,01) }
+        end
+      end
+      it "has no error if date is before or equal to predicate" do
+        instance = clazz.new(birthday: Date.new(2019,01,01))
+        assert instance.valid?
+        assert instance.errors.empty?
+        instance = clazz.new(birthday: Date.new(2020,01,01))
+        assert instance.valid?
+        assert instance.errors.empty?
+      end
+      it "has an error if date is after predicate" do
+        instance = clazz.new(birthday: Date.new(2021,01,01))
+        refute instance.valid?
+        assert_equal ["Birthday : 2021-01-01 is not a valid value. Date cannot be after 2020-01-01."], instance.errors.full_messages
+      end
+
+      describe "field comparison" do
+        let(:clazz) do
+          Class.new(User) do
+            validates :birthday, must_be: { before: :naming_day }
+          end
+        end
+        it "has an error if date is after other field" do
+          instance = clazz.new(birthday: Date.new(2021,01,01), naming_day: Date.new(2020,01,01))
+          refute instance.valid?
+          assert_equal ["Birthday : 2021-01-01 is not a valid value. Date cannot be after naming_day."], instance.errors.full_messages
+        end
+        it "has NO error if date is equal to other field" do
+          instance = clazz.new(birthday: Date.today, naming_day: Date.today)
+          assert instance.valid?
+          assert instance.errors.empty?
+        end
+      end
+
+
+      describe ":now" do
+        let(:clazz) do
+          Class.new(User) do
+            validates :birthday, must_be: { before: :now }
+          end
+        end
+        it "has an error if date is after now" do
+          instance = clazz.new(birthday: (Date.today + 10))
+          refute instance.valid?
+          assert_equal ["Birthday : 2021-04-25 is not a valid value. Date cannot be in the future."], instance.errors.full_messages
+        end
+        it "has NO error if date is equal to now" do
+          instance = clazz.new(birthday: Time.now)
+          assert instance.valid?
+          assert instance.errors.empty?
+        end
+      end
+
+      describe ":today" do
+        let(:clazz) do
+          Class.new(User) do
+            validates :birthday, must_be: { before: :today }
+          end
+        end
+        it "has an error if date is after today" do
+          instance = clazz.new(birthday: (Date.today + 10))
+          refute instance.valid?
+          assert_equal ["Birthday : 2021-04-25 is not a valid value. Date cannot be in the future."], instance.errors.full_messages
+        end
+        it "has NO error if date is equal to today" do
+          instance = clazz.new(birthday: Time.now)
+          assert instance.valid?
+          assert instance.errors.empty?
+        end
+      end
+
+    end
+
+    describe "after" do
+      let(:clazz) do
+        Class.new(User) do
+          validates :birthday, must_be: { after: Date.new(2020,01,01) }
+        end
+      end
+      it "has no error if date is after or equal to predicate" do
+        instance = clazz.new(birthday: Date.new(2021,01,01))
+        assert instance.valid?
+        assert instance.errors.empty?
+        instance = clazz.new(birthday: Date.new(2020,01,01))
+        assert instance.valid?
+        assert instance.errors.empty?
+      end
+      it "has an error if date is before predicate" do
+        instance = clazz.new(birthday: Date.new(2001,01,01))
+        refute instance.valid?
+        assert_equal ["Birthday : 2001-01-01 is not a valid value. Date cannot be before 2020-01-01."], instance.errors.full_messages
+      end
+
+      describe ":now" do
+        let(:clazz) do
+          Class.new(User) do
+            validates :birthday, must_be: { before: :now }
+          end
+        end
+        it "has an error if date is after now" do
+          instance = clazz.new(birthday: (Date.today + 10))
+          refute instance.valid?
+          assert_equal ["Birthday : 2021-04-25 is not a valid value. Date cannot be in the future."], instance.errors.full_messages
+        end
+        it "has NO error if date is equal to now" do
+          instance = clazz.new(birthday: Time.now)
+          assert instance.valid?
+          assert instance.errors.empty?
+        end
+      end
+    end
 
 
   end
