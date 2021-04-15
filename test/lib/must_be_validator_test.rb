@@ -491,6 +491,84 @@ class MustBeValidatorTest < Minitest::Test
       end
     end
 
+    describe "when" do
+      it "handles method call on condition" do
+        clazz = Class.new(User) do
+          validates :email, must_be: { present: true, when: {salary: :present?} }
+        end
+        instance = clazz.new(email: nil, salary: 10)
+        refute instance.valid?
+        assert_equal ["Email must be present when salary is present."], instance.errors.full_messages
+        instance = clazz.new(email: 'foo@bar.com', salary: 10)
+        assert instance.valid?
+        assert instance.errors.empty?
+        instance = clazz.new(email: nil, salary: nil)
+        assert instance.valid?
+        assert instance.errors.empty?
+      end
+
+      it "handles value on condition" do
+        clazz = Class.new(User) do
+          validates :email, must_be: { present: true, when: {salary: 20} }
+        end
+        instance = clazz.new(email: nil, salary: 20)
+        refute instance.valid?
+        assert_equal ["Email must be present when salary = 20.0."], instance.errors.full_messages
+        instance = clazz.new(email: 'foo@bar.com', salary: 20)
+        assert instance.valid?
+        assert instance.errors.empty?
+        instance = clazz.new(email: nil, salary: 6)
+        assert instance.valid?
+        assert instance.errors.empty?
+      end
+
+      it "handles method symbol on condition" do
+        clazz = Class.new(User) do
+          validates :email, must_be: { present: true, when: {status: :premium? } }
+        end
+        instance = clazz.new(email: nil, name: 'beyonce')
+        refute instance.valid?
+        assert_equal ["Email must be present when status is premium."], instance.errors.full_messages
+        instance = clazz.new(email: 'foo@bar.com', salary: 20)
+        assert instance.valid?
+        assert instance.errors.empty?
+        instance = clazz.new(email: nil, salary: 6)
+        assert instance.valid?
+        assert instance.errors.empty?
+      end
+
+
+      it "handles Regexp on condition" do
+        clazz = Class.new(User) do
+          validates :email, must_be: { present: true, when: {name: /dave.*/} }
+        end
+        instance = clazz.new(email: nil, name: 'dave t')
+        refute instance.valid?
+        assert_equal ["Email must be present when name = dave t."], instance.errors.full_messages
+        instance = clazz.new(email: 'foo@bar.com', name: 'dav')
+        assert instance.valid?
+        assert instance.errors.empty?
+        instance = clazz.new(email: nil, name: nil)
+        assert instance.valid?
+        assert instance.errors.empty?
+      end
+
+      it "handles array on condition" do
+        clazz = Class.new(User) do
+          validates :email, must_be: { present: true, when: {name: ['Dave', 'Alice', 'Fred']} }
+        end
+        instance = clazz.new(email: nil, name: 'Alice')
+        refute instance.valid?
+        assert_equal ["Email must be present when name = Alice."], instance.errors.full_messages
+        instance = clazz.new(email: 'foo@bar.com', name: 'Fred')
+        assert instance.valid?
+        assert instance.errors.empty?
+        instance = clazz.new(email: nil, name: 'Rita')
+        assert instance.valid?
+        assert instance.errors.empty?
+      end
+
+    end
 
   end
 end

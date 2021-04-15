@@ -17,6 +17,10 @@ class User < ActiveRecord::Base
   def self.name
     "User"
   end
+
+  def status
+    name == 'beyonce' ? OpenStruct.new(:'premium?' => true) : OpenStruct.new(:'premium?' => false)
+  end
 end
 
 module CleanDB

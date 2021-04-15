@@ -40,6 +40,20 @@ class Account
     when: {
       account_type: :adult?
     }
+
+    validates :open_date, date: {time: true, before: :now}
+
+    validates :late_fee,
+      must_be: { 
+        equal_to: 0,
+        when: { 
+          status: 'current',
+          customer_type: :premier? 
+        },
+        rule_name: :premier_customer_waived_fee
+      },
+      allow_blank: true
+
 end
 ```
 

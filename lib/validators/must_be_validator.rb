@@ -67,14 +67,17 @@ class MustBeValidator < ActiveModel::EachValidator
         case values
         when Regexp
           return if !values.match?(record[field])
+          condition_errors << "#{field} = #{record[field]}"
         when Array
           return if !values.include?(record[field])
+          condition_errors << "#{field} = #{record[field]}"
         when Symbol
-          return if !record[field].send(values)
+          return if !record.send(field)&.send(values)
+          condition_errors << "#{field} is #{values.to_s.gsub('?', '')}"
         else
           return if values != record[field]
+          condition_errors << "#{field} = #{record[field]}"
         end
-        condition_errors << "#{field} = #{record[field]}"
       end
       message << condition_errors.join(' and ')
     end
