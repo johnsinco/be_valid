@@ -20,7 +20,7 @@ class User < ActiveRecord::Base
 end
 
 module CleanDB
-  def before_setup
+  def after_setup 
     super
     ActiveRecord::Base.descendants.each do |model|
       next if %w[ActiveRecord::InternalMetadata ActiveRecord::SchemaMigration primary::SchemaMigration].include?(model.name)

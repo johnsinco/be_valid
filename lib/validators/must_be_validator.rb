@@ -44,10 +44,11 @@ class MustBeValidator < ActiveModel::EachValidator
     end
 
     options.slice(*MATCHERS.keys).each do |key, operand|
-      operand_msg = operand.to_s
+      operand_msg = operand.is_a?(Regexp) ? operand.inspect : operand.to_s
       operand = record.send(operand) if operand.is_a? Symbol
       return if operand.nil?
       return if value&.send(MATCHERS[key], operand)
+      return if key == :not_equal_to && value != operand
       message << " #{key.to_s.humanize(capitalize: false)} #{operand_msg}"
     end
 
