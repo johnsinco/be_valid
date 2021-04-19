@@ -1,97 +1,109 @@
-class MustBeValidator < ActiveModel::EachValidator
-  MATCHERS = {
-    equal_to: :==,
-    greater_than: :>,
-    greater_or_equal_to: :>=,
-    less_than: :<,
-    less_or_equal_to: :<=,
-    not_equal_to: :!=,
-    matching: :=~,
-    # one_of: :in?
-  }.freeze
+require 'active_record'
 
-  MESSAGE_PREFIX = "must be"
-  ERRORS_METHOD = :errors
+module ActiveModel
+  module Validations
+    class MustBeValidator < EachValidator
+      MATCHERS = {
+        equal_to: :==,
+        greater_than: :>,
+        greater_or_equal_to: :>=,
+        less_than: :<,
+        less_or_equal_to: :<=,
+        not_equal_to: :!=,
+        matching: :=~,
+        # one_of: :in?
+      }.freeze
 
-  def validate_each(record, attribute, value) 
-    raise "must_be_validator requires at least one comparison operator for attribute." unless options.slice(MATCHERS.keys + [:blank, :present])
+      MESSAGE_PREFIX = "must be"
+      ERRORS_METHOD = :errors
 
-    original_value = record.read_attribute_before_type_cast( attribute )
+      def validate_each(record, attribute, value) 
+        raise "must_be_validator requires at least one comparison operator for attribute." unless options.slice(MATCHERS.keys + [:blank, :present])
 
-    message = self.class::MESSAGE_PREFIX.dup
+        original_value = record.read_attribute_before_type_cast( attribute )
 
-    return if options[:blank] && value.blank?
-    message << " blank" if options[:blank]
+        message = self.class::MESSAGE_PREFIX.dup
 
-    return if options[:present] && value.present?
-    message << " present" if options[:present]
+        return if options[:blank] && value.blank?
+        message << " blank" if options[:blank]
 
-    return if options[:one_of] && options[:one_of].include?(value)
-    message = ": '#{value}' is not a valid value" if options[:one_of]
+        return if options[:present] && value.present?
+        message << " present" if options[:present]
 
-    return if options[:not_any_of] && !(options[:not_any_of].include?(value))
-    message = ": '#{value}' is not a valid value" if options[:not_any_of]
+        return if options[:one_of] && options[:one_of].include?(value)
+        message = ": '#{value}' is not a valid value" if options[:one_of]
 
-    return if options[:only_from] && (options[:only_from] & Array(value) == Array(value))
-    message = ": #{Array(value).join(",").gsub('"', '\'')} is not a valid value" if options[:only_from]
+        return if options[:not_any_of] && !(options[:not_any_of].include?(value))
+        message = ": '#{value}' is not a valid value" if options[:not_any_of]
 
-    # handle before and after date comparisons using date validator
-    if options[:before] 
-      before_resp = DateValidator.new(options.merge(attributes: attributes)).validate_before_option(record, attribute, value, original_value)
-      return if before_resp == true
-      message = before_resp
-    end
-    if options[:after] 
-      after_resp = DateValidator.new(options.merge(attributes: attributes)).validate_after_option(record, attribute, value, original_value)
-      return if after_resp == true
-      message = after_resp
-    end
+        return if options[:only_from] && (options[:only_from] & Array(value) == Array(value))
+        message = ": #{Array(value).join(",").gsub('"', '\'')} is not a valid value" if options[:only_from]
 
-    options.slice(*MATCHERS.keys).each do |key, operand|
-      operand_msg = operand.is_a?(Regexp) ? operand.inspect : operand.to_s
-      operand = record.send(operand) if operand.is_a? Symbol
-      return if operand.nil?
-      return if value&.send(MATCHERS[key], operand)
-      return if key == :not_equal_to && value != operand
-      message << " #{key.to_s.humanize(capitalize: false)} #{operand_msg}"
-    end
-
-    if options[:when].present?
-      # check if conditions to validate satisfied
-      conditions = options[:when]
-      raise "Invalid :when option provided to must_be, must be a Hash or method" unless (conditions.is_a? Hash || conditions.is_a?(Method))
-      # add error message with predicate info
-      message << " when "
-      condition_errors = []
-      conditions.each do |field, values|
-        case values
-        when Regexp
-          return if !values.match?(record[field])
-          condition_errors << "#{field} = #{record[field]}"
-        when Array
-          return if !values.include?(record[field])
-          condition_errors << "#{field} = #{record[field]}"
-        when Symbol
-          return if !record.send(field)&.send(values)
-          condition_errors << "#{field} is #{values.to_s.gsub('?', '')}"
-        else
-          return if values != record[field]
-          condition_errors << "#{field} = #{record[field]}"
+        # handle before and after date comparisons using date validator
+        if options[:before] 
+          before_resp = DateValidator.new(options.merge(attributes: attributes)).validate_before_option(record, attribute, value, original_value)
+          return if before_resp == true
+          message = before_resp
         end
+        if options[:after] 
+          after_resp = DateValidator.new(options.merge(attributes: attributes)).validate_after_option(record, attribute, value, original_value)
+          return if after_resp == true
+          message = after_resp
+        end
+
+        options.slice(*MATCHERS.keys).each do |key, operand|
+          operand_msg = operand.is_a?(Regexp) ? operand.inspect : operand.to_s
+          operand = record.send(operand) if operand.is_a? Symbol
+          return if operand.nil?
+          return if value&.send(MATCHERS[key], operand)
+          return if key == :not_equal_to && value != operand
+          message << " #{key.to_s.humanize(capitalize: false)} #{operand_msg}"
+        end
+
+        if options[:when].present?
+          # check if conditions to validate satisfied
+          conditions = options[:when]
+          raise "Invalid :when option provided to must_be, must be a Hash or method" unless (conditions.is_a? Hash || conditions.is_a?(Method))
+          # add error message with predicate info
+          message << " when "
+          condition_errors = []
+          conditions.each do |field, values|
+            case values
+            when Regexp
+              return if !values.match?(record[field])
+              condition_errors << "#{field} = #{record[field]}"
+            when Array
+              return if !values.include?(record[field])
+              condition_errors << "#{field} = #{record[field]}"
+            when :blank
+              return unless record.send(field).blank?
+              condition_errors << "#{field} is #{values.to_s.gsub('?', '')}"
+            when :present
+              return unless record.send(field).present?
+              condition_errors << "#{field} is #{values.to_s.gsub('?', '')}"
+            when Symbol
+              return if !record.send(field)&.send(values)
+              condition_errors << "#{field} is #{values.to_s.gsub('?', '')}"
+            else
+              return if values != record[field]
+              condition_errors << "#{field} = #{record[field]}"
+            end
+          end
+          message << condition_errors.join(' and ')
+        end
+
+        if options[:one_of] && options.fetch(:show_values, true)
+          message << ". Valid values: #{options[:one_of].join(', ')}"
+        end
+        if options[:only_from] && options.fetch(:show_values, true)
+          message << ". Valid values: #{options[:only_from].join(', ')}"
+        end
+        if options[:not_any_of] && options.fetch(:show_values, true)
+          message << ". Invalid values: #{options[:not_any_of].join(', ')}"
+        end
+
+        record.send(self.class::ERRORS_METHOD).add(attribute, (options[:message] || "#{message}."), rule_name: options[:rule_name])
       end
-      message << condition_errors.join(' and ')
     end
-
-    if options[:one_of] && options.fetch(:show_values, true)
-      message << ". Valid values: #{options[:one_of].join(', ')}"
-    end
-    if options[:only_from] && options.fetch(:show_values, true)
-      message << ". Valid values: #{options[:only_from].join(', ')}"
-    end
-    if options[:not_any_of] && options.fetch(:show_values, true)
-      message << ". Invalid values: #{options[:not_any_of].join(', ')}"
-    end
-
-    record.send(self.class::ERRORS_METHOD).add(attribute, (options[:message] || "#{message}."), rule_name: options[:rule_name])
   end
 end

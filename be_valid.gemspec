@@ -7,7 +7,6 @@ Gem::Specification.new do |spec|
   spec.name          = "be_valid"
   spec.version       = BeValid::VERSION
   spec.authors       = ["John Stewart (johnsinco)"]
-  spec.email         = ["johnstewartco@outlook.com"]
 
   spec.summary       = %q{Custom Ruby on Rails Validation library supporting 'conditional' validation}
   spec.description   = %q{Provides more advanced and flexible 'if then then that' style conditional validation. Validate fields based on the values of other fields in your model.}
@@ -23,6 +22,8 @@ Gem::Specification.new do |spec|
   spec.bindir        = "exe"
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
+
+  spec.required_ruby_version = '>= 2.3'
 
   spec.add_development_dependency "bundler", "~> 1.17"
   spec.add_development_dependency "rake", "~> 10.0"

@@ -507,6 +507,33 @@ class MustBeValidatorTest < Minitest::Test
         assert instance.errors.empty?
       end
 
+      it "handles :blank when predicate is nil" do
+        clazz = Class.new(User) do
+          validates :email, must_be: { present: true, when: {salary: :blank} }
+        end
+        instance = clazz.new(email: nil, salary: nil)
+        refute instance.valid?
+        assert_equal ["Email must be present when salary is blank."], instance.errors.full_messages
+        instance = clazz.new(email: 'foo@foo', salary: nil)
+        assert instance.valid?
+        instance = clazz.new(email: nil, salary: 20)
+        assert instance.valid?
+      end
+
+      it "handles :present when predicate is nil" do
+        clazz = Class.new(User) do
+          validates :email, must_be: { present: true, when: {salary: :present} }
+        end
+        instance = clazz.new(email: nil, salary: 10)
+        refute instance.valid?
+        assert_equal ["Email must be present when salary is present."], instance.errors.full_messages
+        instance = clazz.new(email: 'foo@foo', salary: 20)
+        assert instance.valid?
+        instance = clazz.new(email: 'foo@foo', salary: nil)
+        assert instance.valid?
+      end
+
+
       it "handles value on condition" do
         clazz = Class.new(User) do
           validates :email, must_be: { present: true, when: {salary: 20} }
