@@ -423,7 +423,7 @@ class MustBeValidatorTest < Minitest::Test
         it "has an error if date is after now" do
           instance = clazz.new(birthday: (Date.today + 10))
           refute instance.valid?
-          assert_equal ["Birthday : 2021-04-25 is not a valid value. Date cannot be in the future."], instance.errors.full_messages
+          assert_equal ["Birthday : #{(Date.today + 10)} is not a valid value. Date cannot be in the future."], instance.errors.full_messages
         end
         it "has NO error if date is equal to now" do
           instance = clazz.new(birthday: Time.now)
@@ -441,7 +441,7 @@ class MustBeValidatorTest < Minitest::Test
         it "has an error if date is after today" do
           instance = clazz.new(birthday: (Date.today + 10))
           refute instance.valid?
-          assert_equal ["Birthday : 2021-04-25 is not a valid value. Date cannot be in the future."], instance.errors.full_messages
+          assert_equal ["Birthday : #{(Date.today + 10)} is not a valid value. Date cannot be in the future."], instance.errors.full_messages
         end
         it "has NO error if date is equal to today" do
           instance = clazz.new(birthday: Time.now)
@@ -481,7 +481,7 @@ class MustBeValidatorTest < Minitest::Test
         it "has an error if date is after now" do
           instance = clazz.new(birthday: (Date.today + 10))
           refute instance.valid?
-          assert_equal ["Birthday : 2021-04-25 is not a valid value. Date cannot be in the future."], instance.errors.full_messages
+          assert_equal ["Birthday : #{(Date.today + 10)} is not a valid value. Date cannot be in the future."], instance.errors.full_messages
         end
         it "has NO error if date is equal to now" do
           instance = clazz.new(birthday: Time.now)
