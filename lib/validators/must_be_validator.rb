@@ -73,7 +73,7 @@ module ActiveModel
               return if !values.match?(record[field])
               condition_errors << "#{field} = #{record[field]}"
             when Array
-              return if !values.include?(record[field])
+              return if !values.flatten.include?(record[field])
               condition_errors << "#{field} = #{record[field]}"
             when :blank
               return unless record.send(field).blank?

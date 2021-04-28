@@ -606,6 +606,22 @@ class MustBeValidatorTest < Minitest::Test
         assert instance.errors.empty?
       end
 
+      it "handles array of arrays on condition" do
+        clazz = Class.new(User) do
+          validates :email, must_be: { present: true, when: {name: [['Dave'], ['Alice', 'Fred']]} }
+        end
+        instance = clazz.new(email: nil, name: 'Alice')
+        refute instance.valid?
+        assert_equal ["Email must be present when name = Alice."], instance.errors.full_messages
+        instance = clazz.new(email: 'foo@bar.com', name: 'Fred')
+        assert instance.valid?
+        assert instance.errors.empty?
+        instance = clazz.new(email: nil, name: 'Rita')
+        assert instance.valid?
+        assert instance.errors.empty?
+      end
+
+
     end
 
   end
