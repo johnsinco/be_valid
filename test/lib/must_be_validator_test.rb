@@ -303,6 +303,17 @@ class MustBeValidatorTest < Minitest::Test
         assert instance.valid?
         assert instance.errors.empty?
       end
+      it "allows arrays of arrays for the one_of values" do
+        clazz = Class.new(User) do
+          validates :bonus, must_be: { one_of: [[4,5],[1,2,3]], show_values: true}
+        end
+        instance = clazz.new(bonus: 5)
+        assert instance.valid?
+        assert instance.errors.empty?
+        instance = clazz.new(bonus: 73)
+        refute instance.valid?
+        assert_equal ["Bonus : '73.0' is not a valid value. Valid values: 4, 5, 1, 2, 3."], instance.errors.full_messages
+      end
       it "shows error if value isnt in list" do
         instance = clazz.new(bonus: 7)
         refute instance.valid?

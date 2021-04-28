@@ -30,7 +30,7 @@ module ActiveModel
         return if options[:present] && value.present?
         message << " present" if options[:present]
 
-        return if options[:one_of] && options[:one_of].include?(value)
+        return if options[:one_of] && Array(options[:one_of]).flatten.include?(value)
         message = ": '#{value}' is not a valid value" if options[:one_of]
 
         return if options[:not_any_of] && !(options[:not_any_of].include?(value))
