@@ -9,10 +9,10 @@ module BeValid
   end
 
   class Configuration
-    attr_accessor :notice_rules
+    attr_accessor :rules
 
     def initialize
-      @notice_rules= []
+      @rules = {}
     end
   end
 end

@@ -20,6 +20,7 @@ module ActiveModel
 
       def validate_each(record, attribute, value) 
         raise "Requires at least one comparison operator for attribute." unless (options.keys & REQD_OPTS).length > 0
+        return if options[:rule_name] && BeValid.config.rules&.fetch(options[:rule_name], {})[:disabled]
 
         original_value = record.read_attribute_before_type_cast( attribute )
 

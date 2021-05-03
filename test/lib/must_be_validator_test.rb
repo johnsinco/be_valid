@@ -4,6 +4,26 @@ require 'validators/must_be_validator'
 
 class MustBeValidatorTest < Minitest::Test
   describe "validate_each" do
+    it "raises an error if there's no matcher" do
+      clazz = Class.new(User) do
+        validates :name, must_be: {}
+      end
+      instance = clazz.new(name: 'foo', email: 'foo')
+      assert_raises do
+        instance.valid?
+      end
+    end
+    it "allows rules to be disabled via the config" do
+      clazz = Class.new(User) do
+        validates :name, must_be: {blank: true, rule_name: :foo}
+      end
+      instance = clazz.new(name: 'foo', email: 'foo')
+      refute instance.valid?
+      BeValid.configure do |config|
+        config.rules[:foo] = {disabled: true}
+      end
+      assert instance.valid?
+    end
     describe "blank" do
       let(:clazz) do
         Class.new(User) do
