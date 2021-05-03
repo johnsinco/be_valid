@@ -11,14 +11,15 @@ module ActiveModel
         less_or_equal_to: :<=,
         not_equal_to: :!=,
         matching: :=~,
-        # one_of: :in?
       }.freeze
+      
+      REQD_OPTS = (MATCHERS.keys + [:blank, :present, :one_of, :not_any_of, :only_from, :before, :after])
 
       MESSAGE_PREFIX = "must be"
       ERRORS_METHOD = :errors
 
       def validate_each(record, attribute, value) 
-        raise "must_be_validator requires at least one comparison operator for attribute." unless options.slice(MATCHERS.keys + [:blank, :present])
+        raise "Requires at least one comparison operator for attribute." unless (options.keys & REQD_OPTS).length > 0
 
         original_value = record.read_attribute_before_type_cast( attribute )
 

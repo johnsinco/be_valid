@@ -621,7 +621,27 @@ class MustBeValidatorTest < Minitest::Test
         assert instance.errors.empty?
       end
 
-
+      it "ANDing of multiples" do
+        clazz = Class.new(User) do
+          validates :email, 
+            must_be: { 
+              present: true, 
+              when: {
+                letters: 'abc',
+                name: 'fred'
+              } 
+            }
+        end
+        instance = clazz.new(letters: 'abc', name: 'fred')
+        refute instance.valid?
+        assert_equal ["Email must be present when letters = abc and name = fred."], instance.errors.full_messages
+        instance = clazz.new(letters: 'abc', name: 'fred', email: 'fred@foo')
+        assert instance.valid?
+        assert instance.errors.empty?
+        instance = clazz.new(letters: 'abc', name: 'betty')
+        assert instance.valid?
+        assert instance.errors.empty?
+      end
     end
 
   end
