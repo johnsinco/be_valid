@@ -40,4 +40,4 @@ DEPENDENCIES
   sqlite3 (~> 1.4)
 
 BUNDLED WITH
-   1.17.2
+   2.2.17
