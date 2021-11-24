@@ -1,4 +1,4 @@
-require 'active_record'
+require 'active_model'
 
 module ActiveModel
   module Validations
@@ -22,7 +22,8 @@ module ActiveModel
         raise "Requires at least one comparison operator for attribute." unless (options.keys & REQD_OPTS).length > 0
         return if options[:rule_name] && BeValid.config.rules&.fetch(options[:rule_name], {})[:disabled]
 
-        original_value = record.read_attribute_before_type_cast( attribute )
+        original_value = value
+        original_value = record.read_attribute_before_type_cast( attribute ) rescue nil # only in rails
 
         message = self.class::MESSAGE_PREFIX.dup
 
@@ -70,13 +71,14 @@ module ActiveModel
           message << " when "
           condition_errors = []
           conditions.each do |field, values|
+            field_value = record.send(field)
             case values
             when Regexp
-              return if !values.match?(record[field])
-              condition_errors << "#{field} = #{record[field]}"
+              return if !values.match?(field_value)
+              condition_errors << "#{field} = #{field_value}"
             when Array
-              return if !values.flatten.include?(record[field])
-              condition_errors << "#{field} = #{record[field]}"
+              return if !values.flatten.include?(field_value)
+              condition_errors << "#{field} = #{field_value}"
             when :blank
               return unless record.send(field).blank?
               condition_errors << "#{field} is #{values.to_s.gsub('?', '')}"
@@ -87,8 +89,8 @@ module ActiveModel
               return if !record.send(field)&.send(values)
               condition_errors << "#{field} is #{values.to_s.gsub('?', '')}"
             else
-              return if values != record[field]
-              condition_errors << "#{field} = #{record[field]}"
+              return if values != field_value
+              condition_errors << "#{field} = #{field_value}"
             end
           end
           message << condition_errors.join(' and ')
@@ -105,6 +107,13 @@ module ActiveModel
         end
 
         record.send(self.class::ERRORS_METHOD).add(attribute, (options[:message] || "#{message}."), rule_name: options[:rule_name])
+      end
+      module ClassMethods
+        def validates_must_be_valid(*attr_names) 
+          validates_with MustBeValidator, _merge_attributes(attr_names)
+        end
+
+        alias_method :validates_must_be, :validates_must_be_valid
       end
     end
   end

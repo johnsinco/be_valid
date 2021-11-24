@@ -1,3 +1,5 @@
+require 'active_model'
+
 class DateValidator < ActiveModel::EachValidator
 
   # https://stackoverflow.com/questions/28538080/rails-validate-dates-in-model-before-type-cast
@@ -6,7 +8,8 @@ class DateValidator < ActiveModel::EachValidator
 
     @error_hash = options[:error_level].present? ? record.send(options[:error_level]) : record.errors
 
-    original_value = record.read_attribute_before_type_cast( attribute )
+    original_value = value
+    original_value = record.read_attribute_before_type_cast( attribute ) rescue nil # only in rails
     # dont display date format error unless date could not be parsed
     if value.nil?
       # if blank date was given it's still not a format issue, still show message if desired
