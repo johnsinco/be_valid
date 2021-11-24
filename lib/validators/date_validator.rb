@@ -81,13 +81,11 @@ class DateValidator < ActiveModel::EachValidator
              record.__send__(option) if record.respond_to?(option)
            end
     return unless date.present?
-    date = date.to_date unless options[:time]
-    if date.is_a?(Time)
-      value = value.to_time
-    elsif date.is_a?(Date)
-      value = value.to_date
+    if options[:time]
+      return [date.to_time, value.to_time]
+    else
+      return [date.to_date, value.to_date]
     end
-    [date, value]
   end
 
 end
