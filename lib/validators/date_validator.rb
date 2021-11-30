@@ -16,7 +16,7 @@ class DateValidator < ActiveModel::EachValidator
       return if original_value.blank? && options[:allow_blank]
 
       # display helpful date format validation message with original value
-      message = options[:time] ?  ": #{original_value} is not a valid value. Value must be a date in YYYY-MM-DD or YYYY-MM-DD HH:MM:SS format." : ": #{original_value} is not a valid value. Value must be a date in YYYY-MM-DD."
+      message = options[:time] ?  ": #{original_value} is not a valid value. Value must be a date in YYYY-MM-DD or YYYY-MM-DD HH:MM:SS format." : ": #{original_value} is not a valid value. Value must be a date in YYYY-MM-DD format."
       @error_hash.add(attribute, (options[:message] || message))
     else
       # handle validation options on valid date instances
