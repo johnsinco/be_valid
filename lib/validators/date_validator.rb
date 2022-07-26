@@ -41,7 +41,7 @@ class DateValidator < ActiveModel::EachValidator
     elsif options[:after].respond_to?(:strftime)
       after_message << " Date cannot be before #{options[:after]}"
     elsif options[:after].is_a? Proc
-      after_message << " Date cannot be before #{options[:after].call(record)}"
+      after_message << " Date cannot be before #{date}"
     elsif record.respond_to?(options[:after])
       after_message << " Date cannot be before #{options[:after]}"
     end
@@ -59,7 +59,7 @@ class DateValidator < ActiveModel::EachValidator
       elsif options[:before].respond_to?(:strftime)
         before_message << " Date cannot be after #{options[:before]}"
       elsif options[:before].is_a? Proc
-        before_message << " Date cannot be after #{options[:before].call(record)}"
+        before_message << " Date cannot be after #{date}"
       elsif record.respond_to?(options[:before])
         before_message << " Date cannot be after #{options[:before]}"
       end
